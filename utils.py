@@ -37,9 +37,7 @@ def createDataset(dataset, lookback):
 def pointError(trueY, predY):
     trueY_ = np.array(trueY)
     predY_ = np.array(predY)
-    assert trueY_.shape == predY_.shape
     rst = ((predY_ - trueY_) ** 2).mean(axis=1)
-    assert rst.shape == (trueY_.shape[0],)
     return rst
 
 def windowAverage(errors, window=5):
@@ -47,8 +45,9 @@ def windowAverage(errors, window=5):
     rst = [errors_[i:(i+window)].mean() for i in range(len(errors)-window+1)]
     return rst
 
-def getOptimalFscore(y_true, prob_pred, beta=1):
-    arg_sorted = np.argsort(prob_pred)[::-1]
+def getOptimalFscore(y_true, prob_pred, order='desc', beta=1):
+    arg_sorted = np.argsort(prob_pred)
+    arg_sorted = arg_sorted[::-1] if order=='desc' else arg_sorted
     y_true_sort = np.array(y_true)[arg_sorted]
     prob_sort = np.array(prob_pred)[arg_sorted]
 
@@ -60,7 +59,10 @@ def getOptimalFscore(y_true, prob_pred, beta=1):
             count += 1
         p = count / (i+1)
         r = count / num_ones
-        f1 = (1 + beta**2) * p * r / (beta**2 * p + r)        
+        if count == 0:
+            f1 = 0
+        else:
+            f1 = (1 + beta**2) * p * r / (beta**2 * p + r)        
         if f1 > f1_best:
             p_best = p
             r_best = r
